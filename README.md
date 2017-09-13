@@ -1,1 +1,2 @@
 # Chronograph
+This is the codebase for the Chronograph project, by DS Guitar Engineering.  The goal of the project was to create a device with clock, stopwatch, and countdown timer functionality in a pedalboard friendly package.  The pedal needed to be as compact as possible therefore it is in a small plastic enclosure and only uses one footswitch for all needed user input.  An internal battery is necessary to maintain a running clock.  External 9VDC power is required for the microcontroller and display.
