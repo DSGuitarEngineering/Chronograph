@@ -1,2 +1,86 @@
 # Chronograph
 This is the codebase for the Chronograph project, by DS Guitar Engineering.  The goal of the project was to create a device with clock, stopwatch, and countdown timer functionality in a pedalboard friendly package.  The pedal needed to be as compact as possible therefore it is in a small plastic enclosure and only uses one footswitch for all needed user input.  An internal battery is necessary to maintain a running clock.  External 9VDC power is required for the microcontroller and display.
+
+## Getting Started
+
+Follow these instructions to build a Chronograph development board.  See the depolyment section if you wish to use the official Chronograph hardware for development.
+
+### Prerequisites
+
+The following is a minimum BOM needed to make a Chronograph development board.  Links are provided for the DIP variant (if available) for simplified breadboard wiring.  The official hardware utilizies 100% surface mount packages.
+* Any ATtiny85 variant available as a "board" in the Arduino IDE
+* Any variant of the DS1307 RTC
+* AMS display driver
+* Avago/Broadcom clock display
+
+### Installing
+
+A step by step series of examples that tell you have to get a development env running
+
+Say what the step will be
+
+```
+Give the example
+```
+
+And repeat
+
+```
+until finished
+```
+
+End with an example of getting some data out of the system or using it for a little demo
+
+## Running the tests
+
+Explain how to run the automated tests for this system
+
+### Break down into end to end tests
+
+Explain what these tests test and why
+
+```
+Give an example
+```
+
+### And coding style tests
+
+Explain what these tests test and why
+
+```
+Give an example
+```
+
+## Deployment
+
+Add additional notes about how to deploy this on a live system
+
+## Built With
+
+* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
+* [Maven](https://maven.apache.org/) - Dependency Management
+* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+
+## Contributing
+
+Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+
+## Authors
+
+* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+
+See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
+## Acknowledgments
+
+* Hat tip to anyone who's code was used
+* Inspiration
+* etc
