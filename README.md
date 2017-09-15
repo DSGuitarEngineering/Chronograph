@@ -17,48 +17,31 @@ The following is a minimum BOM needed to make a Chronograph development board.  
 * Resistors: (2) 4k7, (1) 10k, (1) 24k
 * Capacitors: (2) 1u, (3) 0.1u
 * Any SPST momentary switch
+* Any AVR programmer supported by the Arduino IDE.  You may also use an Arduino board as a programmer by following [these instructions](https://www.arduino.cc/en/Tutorial/ArduinoToBreadboard).  Follow the "Minimal Circuit" example.
 
 ### Installing
 
-A step by step series of examples that tell you have to get a development env running
+Follow these steps to wire and write firmware to the Chronograph breadboard.
 
-Say what the step will be
+#### Hardware Setup
+1. Use the schematic to wire the breadboard as shown.
 
-```
-Give the example
-```
+#### Software Setup
+1. Download and install the [Arduino IDE](https://www.arduino.cc/en/Main/Software).
+2. Install the necessary boards and libraries.
+3. Select "ATTiny85 (8MHz internal clock)" for the board.
+4. Select your programmer or "ArduinoAsISP".
 
-And repeat
+#### Uploading the Firmware
+1. Open the Chronograph_v1.0.2.ino file.
+2. Burn the bootloader to the chip (only necessary for first upload).
+3. Compile and upload the sketch.
 
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
 
 ## Deployment
 
 Add additional notes about how to deploy this on a live system
+
 
 ## Built With
 
