@@ -11,6 +11,7 @@ The following is a minimum BOM needed to make a Chronograph development board.  
 * Any [ATtiny85](http://www.mouser.com/ProductDetail/Microchip-Technology-Atmel/ATtiny85-20PU/?qs=sGAEpiMZZMtkfMPOFRTOl5CRAVRAdtfp) variant available as a "board" in the Arduino IDE
 * Any variant of the [DS1307](http://www.mouser.com/ProductDetail/Maxim-Integrated/DS1307+/?qs=sGAEpiMZZMsWkX3fPoxIPao0OKuDwxf4) RTC
 * [AS1115](http://www.mouser.com/Search/ProductDetail.aspx?R=AS1115-BSSTvirtualkey58040000virtualkey985-AS1115-BSST) display driver
+* [QSOP-24 Breakout Board](https://www.digikey.com/products/en?mpart=PA0030&v=315)
 * Avago/Broadcom [HDSP-B09G](https://www.mouser.com/Search/ProductDetail.aspx?R=HDSP-B09Gvirtualkey63050000virtualkey630-HDSP-B09G) clock display
 * [78L05 Regulator](http://www.mouser.com/ProductDetail/STMicroelectronics/L78L05CZ/?qs=sGAEpiMZZMvHdo5hUx%252bJYu5Iq5FsYDe%252b), 5VDC, 100mA minimum
 * Resistors: (2) 4k7, (1) 10k, (1) 24k
