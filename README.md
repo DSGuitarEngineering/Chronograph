@@ -33,7 +33,7 @@ Follow these steps to wire and write firmware to the Chronograph breadboard.
 4. Select your programmer or "ArduinoAsISP".
 
 #### Uploading the Firmware
-1. Open the Chronograph_v1.0.2.ino file.
+1. Open the Chronograph_v1.2.0.ino file.
 2. Burn the bootloader to the chip (only necessary for first upload).
 3. Compile and upload the sketch.
 
