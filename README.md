@@ -8,7 +8,7 @@ Follow these instructions to build a Chronograph development board.  See the dep
 ### Prerequisites
 
 The following is a minimum BOM needed to make a Chronograph development board.  Links are provided for the DIP variant (if available) for simplified breadboard wiring.  The official hardware utilizies 100% surface mount packages.
-* Any [ATtiny85](http://www.mouser.com/ProductDetail/Microchip-Technology-Atmel/ATtiny85-20PU/?qs=sGAEpiMZZMtkfMPOFRTOl5CRAVRAdtfp) variant available as a "board" in the Arduino IDE
+* Any [ATtiny85](http://www.mouser.com/ProductDetail/Microchip-Technology-Atmel/ATtiny85-20PU/?qs=sGAEpiMZZMtkfMPOFRTOl5CRAVRAdtfp) variant
 * Any variant of the [DS1307](http://www.mouser.com/ProductDetail/Maxim-Integrated/DS1307+/?qs=sGAEpiMZZMsWkX3fPoxIPao0OKuDwxf4) RTC
 * [AS1115](http://www.mouser.com/Search/ProductDetail.aspx?R=AS1115-BSSTvirtualkey58040000virtualkey985-AS1115-BSST) display driver
 * [QSOP-24 Breakout Board](https://www.digikey.com/products/en?mpart=PA0030&v=315)
@@ -33,7 +33,7 @@ Follow these steps to wire and write firmware to the Chronograph breadboard.
 4. Select your programmer or "ArduinoAsISP".
 
 #### Uploading the Firmware
-1. Open the Chronograph_v1.2.0.ino file.
+1. Open the Chronograph_v1.0.2.ino file.
 2. Burn the bootloader to the chip (only necessary for first upload).
 3. Compile and upload the sketch.
 
