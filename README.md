@@ -8,10 +8,14 @@ Follow these instructions to build a Chronograph development board.  See the dep
 ### Prerequisites
 
 The following is a minimum BOM needed to make a Chronograph development board.  Links are provided for the DIP variant (if available) for simplified breadboard wiring.  The official hardware utilizies 100% surface mount packages.
-* Any ATtiny85 variant available as a "board" in the Arduino IDE
-* Any variant of the DS1307 RTC
-* AMS display driver
-* Avago/Broadcom clock display
+* Any [ATtiny85](http://www.mouser.com/ProductDetail/Microchip-Technology-Atmel/ATtiny85-20PU/?qs=sGAEpiMZZMtkfMPOFRTOl5CRAVRAdtfp) variant available as a "board" in the Arduino IDE
+* Any variant of the [DS1307](http://www.mouser.com/ProductDetail/Maxim-Integrated/DS1307+/?qs=sGAEpiMZZMsWkX3fPoxIPao0OKuDwxf4) RTC
+* [AS1115](http://www.mouser.com/Search/ProductDetail.aspx?R=AS1115-BSSTvirtualkey58040000virtualkey985-AS1115-BSST) display driver
+* Avago/Broadcom [HDSP-B09G](https://www.mouser.com/Search/ProductDetail.aspx?R=HDSP-B09Gvirtualkey63050000virtualkey630-HDSP-B09G) clock display
+* [78L05 Regulator](http://www.mouser.com/ProductDetail/STMicroelectronics/L78L05CZ/?qs=sGAEpiMZZMvHdo5hUx%252bJYu5Iq5FsYDe%252b), 5VDC, 100mA minimum
+* Resistors: (2) 4k7, (1) 10k, (1) 24k
+* Capacitors: (2) 1u, (3) 0.1u
+* Any SPST momentary switch
 
 ### Installing
 
