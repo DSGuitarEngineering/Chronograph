@@ -40,35 +40,33 @@ Follow these steps to wire and write firmware to the Chronograph breadboard.
 
 ## Deployment
 
-Add additional notes about how to deploy this on a live system
+Follow these steps to write firmware to the official Chronograph hardware.  Your hardware version is printed on the PCB.
 
+### Hardware Version 1.1 or older
 
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+1. Carefully use desoldering tools to remove the ATTiny85 IC.
+2. I recommend using a new uC to upload new firmware.
+3. Insert the uC in your breadboard or programmer and follow the same steps in "Uploading the Firmware" above.
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+Please initiate contact through our [official website](https://ds.engineering/contact) if you're interested in contributing to this project.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/DSGuitarEngineering/Chronograph/tags). 
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Daniel Shields** - *Original Author* - [HungryCow212](https://github.com/HungryCow212)
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/DSGuitarEngineering/Chronograph/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
 
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
+* Ryan, co-host of the [60 Cycle Hum podcast](https://60cyclehumcast.com/) for inspiration
+* [Adafruit](https://github.com/Adafruit) for software libraries and other incredible resources
