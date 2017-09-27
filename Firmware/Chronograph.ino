@@ -14,112 +14,17 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Version:        1.0.2
-Modified:       September 11, 2017
-Verified:       September 11, 2017
+Version:        1.2.0
+Modified:       September 27, 2017
+Verified:       September 27, 2017
 Target uC:      ATtiny85
-Customer:       Production
 
 -----------------------------------------***DESCRIPTION***
-The goal of this project is to build a pedalboard clock with countdown timer and stopwatch functionality. 
-The pedal needs to be as compact as possible therefore it will be in a small plastic enclosure and will only 
+The goal of this project is to build a pedalboard clock with countdown timer and stopwatch functionality.
+The pedal needs to be as compact as possible therefore it will be in a small plastic enclosure and will only
 use one footswitch for all needed user input.  An internal battery will be necessary to maintain a running
 clock.  External power will light the display and power the microprocessor.
 
-
---------------------------------------***REVISION HISTORY***
-v0.1 Revisions
--imported code for debounce
--wrote basic code to test the circuit
--wrote code to display a lightshow on startup
-
-v0.2 Revisions
--added code to test basic footswitch functionality
--wrote a basic menu structure
--added countdown timer routines to the menu
-
-v0.2.1 Revisions
--added countdown timer pause and stop/clear functions
-
-v0.3 Revisions
--added stopwatch functions
--added root menu display text
--reworked menu structure
-
-v0.3.2 Revisions
--added code to blink minutes and seconds for countdown timer indication
--fixed bug with exiting countdown timer
--fixed but with minutes not flashing when setting up timer 2nd time
-
-v0.4 Revisions
--added code to retain last used countdown timer settings
--changed a few variables' data type to save program space
--updated countdown timer code to accommodate "byte" data type for seconds
-
-v0.5 Revisions
--added code to integrate RTC
-
-v0.6 Revisions
--revised writeClk routine to turn off first digit if time is less than 10:00
--added setup menu
-
-v0.6.1 Revisions
--optimized code to reduce program space usage
-
-v0.6.2 Revisions
--wrote generic routines for writing the display to further optimize code
-
-v0.6.3 Revisions
--finished coding the setup menu
-
-v0.7 Revisions
--revised setup menu
--blink on/off setting eliminated, blink off when minutes set to zero
--added code to enable the warning blink if the countdown timer is below the threshold
-
-v0.8 Revisions
--adapted code to run on bare ATtiny85
--enabled pullup resistor on footswitch input pin and inverted logic code
-
-v0.8.1 Revisions
--changed hex code values for startup lightshow to accommodate new display
--changed digit reference numbers
-
-v0.8.2 Revisions
--added code to draw colon when necessary
--fixed display decoding issues for raw data
--updated display clearing routine
-
-v0.8.3 Revisions
--added code where necessary to change display decoding
--added code to change display decoding in the setup menu
--fixed blinkLeft and blinkRight routines
--updated blinkRate routine
-
-v0.8.4 Revisions
--fixed clock hour format toggling bug in Setup menu (display only)
-
-v0.8.5 Revisions
--fixed 24 hour clock issues
--fixed bug where 12AM displayed as "0" in 12 hour clock format
--added code to display first digit of clock at all times in 24 hour mode
--removed some old, unused code
--reordered setup menu to Blink -> Hour Format -> Clock Adjustment (test other revisions first)
-
-v1.0.0 Revisions
--functionally the same as RC1 (v0.8.5)
--general cleanup; removed unused code segments
--added comments throughout
-
-v1.0.1 Revisions
--added declaration and setup for RTC square wave input pin
--added a subroutine to directly write to the RTC chip
--revised count-down and count-up functions to utilize RTC square wave for improved accuracy
--revised display blinking feature to synchronize with timers
-
-v1.0.2 Revisions
--fixed errors with the 1.0.1 revisions
--eliminated external pullup for SQW input
 
 --------------------------------------------------------------------------------------------------------*/
 //include the necessary libraries
@@ -163,7 +68,7 @@ boolean drawColon = false;      //lights the colon segments on the display when 
 
 //*****************************************SETUP**********************************************
 
-void setup() 
+void setup()
 {
   //check EEPROM for errors and load default values if errors are found
   if(EEPROM.read(0) > 99) EEPROM.update(0, B00000001);    //initialize countdown timer minutes to 1
@@ -173,21 +78,21 @@ void setup()
   if(EEPROM.read(3) > 1)  EEPROM.update(3, B00000000);    //initialize countdown timer warning to "on"
       //0 = on, 1 = off
   if(EEPROM.read(4) > 10) EEPROM.update(4, B00000001);    //initialize warning time to 1min
-  
+
   //setup I/O pin modes
   pinMode (FSW, INPUT_PULLUP);                            //footswitch is NO between pin and ground
   pinMode (SQW, INPUT_PULLUP);                            //RTC SQW pin is open drain; requires pullup
-      
+
   //initialize the RTC
   rtc.begin();
-  
+
   //initialize the display
   TinyWireM.begin();                                      //setup the I2C bus
   WriteDisp(0x0C, 0x01);                                  //wake up & reset feature register
   WriteDisp(0x0A, 0x0F);                                  //set global intensity to 100%
   WriteDisp(0x0B, 0x03);                                  //set scan limit to display first 4 digits
   WriteDisp(0x09, 0x00);                                  //set all digits to "no decode"
-      
+
   //if the footswitch is held down, start in setup mode
   if(digitalRead(FSW) == LOW)
   {
@@ -213,7 +118,7 @@ void setup()
     lightShow();                                          //display the startup lightshow
     writeClk();                                           //write the current time to the display
   }
-  
+
 }
 
 
@@ -229,7 +134,7 @@ void loop()
     buttonDown = true;                        //record a valid press
     buttonTimer = millis();                   //restart the debounce timer
   }
-  
+
   //check for a valid button release transition
   if ((millis() - buttonTimer >= debounce) && buttonDown && (digitalRead(FSW) == HIGH))
   //if it has been longer than the debounce interval and the previous reading was "down"
@@ -237,9 +142,9 @@ void loop()
   {
     buttonDown = false;                      //record a valid release
     buttonTimer = millis();                  //restart the debounce timer
-        
+
     //when a valid release is detected:
-    
+
     if (buttonHeld == true)                  //if the release occurs after a button is held
       {
         buttonHeld = false;                  //reset the buttonHeld variable
@@ -251,7 +156,7 @@ void loop()
 
 //bailout from line 226
 bailout:
-  
+
   //call hold functions if footswitches are held for 1 second or longer
   if ((buttonDown == true) && (millis() - buttonTimer >= 1000) && (buttonHeld == false))
     {
@@ -262,7 +167,7 @@ bailout:
   //check the state of the RTC 1Hz square wave***********************************************************************************************************
   SQWstate = digitalRead(SQW);
   delay(50);
-  
+
   //if the countdown timer is active and it has been 1 second or more
   if ((runTimer == true) && (SQWstate == 1) && (digitalRead(SQW) == 0))
   {
@@ -278,7 +183,7 @@ bailout:
       runTimer = false;                             //diable the countdown timer
       menu = B00000001;
     }
-    
+
   }
 
   //if the stopwatch is active and it has been 1 second or more
@@ -563,7 +468,7 @@ void holdHandler()
       //accept clock minute
         //accept clock hour format
         //update RTC hour format
-        
+
         //load next menu item
         writeClk();
         delay(500);
@@ -606,13 +511,13 @@ void writeClk()
 void writeLeft(byte x)
 {
   WriteDisp(1, x / 10);
-  
+
   //if the clock is active and in 12 hour format
   if((clkHour < 10) && (menu == 0 || menu == B00010000 || menu == B00100000) && (EEPROM.read(2) == 0))
   {
     WriteDisp(1, 0x0F);           // turn off the first digit if time is less than 10:00
   }
-  
+
   if(drawColon == false) {WriteDisp(2, x % 10);}
   if(drawColon == true)
   {
