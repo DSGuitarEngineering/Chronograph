@@ -16,7 +16,7 @@
 
 Version:        1.2.0
 Modified:       September 27, 2017
-Verified:       September 27, 2017
+Verified:
 Target uC:      ATtiny85
 
 -----------------------------------------***DESCRIPTION***
@@ -346,7 +346,7 @@ void holdHandler()
         WriteDisp(0x09, 0x00);                    //set all digits to "no decode"
         writeLeftRaw(0x4E, 0x0F);     //C,t
         writeRightRaw(0x3D, 0x15);    //d,n
-        WriteRTC(0x07, B00010000);                //enable the RTC's SQW output at a frequency of 1Hz****************************************************
+        WriteRTC(0x0E, B00000000);                //enable the RTC's SQW output at a frequency of 1Hz****************************************************
         menu = B00000001;
       break;
     case B00000001:
@@ -422,7 +422,7 @@ void holdHandler()
         drawColon = true;                         //enable the colon
         menu = B00000000;
         writeClk();                               //write the current time to the display
-        WriteRTC(0x07, B00000000);                //disable the RTC's SQW output******************************************************************************
+        WriteRTC(0x07, B00000100);                //disable the RTC's SQW output******************************************************************************
       break;
     case B00001011:
       //stopwatch Stop/Reset
@@ -431,7 +431,7 @@ void holdHandler()
         drawColon = true;                         //enable the colon
         menu = B00000000;
         writeClk();                               //write the current time to the display
-        WriteRTC(0x07, B00000000);                //disable the RTC's SQW output******************************************************************************
+        WriteRTC(0x07, B00000100);                //disable the RTC's SQW output******************************************************************************
       break;
     case B00001100:
       //stopwatch start
@@ -631,7 +631,7 @@ void WriteDisp(byte cmd, byte data) {
 
 //This routine addresses and sends data to the RTC chip (write operation)-----------------------------------------------
 void WriteRTC(byte cmd, byte data) {
-  TinyWireM.beginTransmission(0x68);      //7-bit address for DS1307
+  TinyWireM.beginTransmission(0x68);      //7-bit address for DS1307/3231
   TinyWireM.write(cmd);
   TinyWireM.write(data);
   TinyWireM.endTransmission();
