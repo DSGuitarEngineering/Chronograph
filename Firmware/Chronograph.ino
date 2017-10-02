@@ -15,8 +15,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Version:        1.2.0
-Modified:       September 27, 2017
-Verified:       September 27, 2017
+Modified:       October 2, 2017
+Verified:
 Target uC:      ATtiny85
 
 -----------------------------------------***DESCRIPTION***
@@ -48,6 +48,7 @@ int debounce = 40UL;            //debounce time in milliseconds
 //unsigned long prevTime = 0;
 byte SQWstate;
 
+byte swHrs = 0;                 //stores the hours value of the stopwatch
 byte swMin = 0;                 //stores the minutes value of the stopwatch
 byte swSec = 0;                 //stores the seconds value of the stopwatch
 boolean runSW = false;          //trigger for incrementing the stopwatch in the main loop
@@ -191,13 +192,24 @@ bailout:
   {
     swSec = ++swSec;                                //increment the stopwatch seconds
     if(swSec > 59) {swSec = 0; swMin = ++swMin;}    //change the seconds to zero if the value passes 59
-    writeLeft(swMin);                               //refresh the display
-    writeRight(swSec);                              //"
-    if((swSec == 0) && (swMin == 90))               //if the stopwatch reaches 90 minutes and 0 seconds
+    if(swMin > 59) {swMin = 0; swHrs = ++swHrs;}    //change the minutes to zero if the value passes 59
+    if(swHrs == 0)
+    {
+      writeLeft(swMin);                             //refresh the display
+      writeRight(swSec);                            //"
+    }
+    if(swHrs > 0)
+    {
+      drawColon = !drawColon;                       //toggle the colon every second if an hour has passed
+      writeLeft(swHrs);                             //refresh the display
+      writeRight(swMin);                            //"
+    }
+    if(swHrs == 99)                                 //if the stopwatch reaches 99 hours
     {
       runSW = false;                                //disable the stopwatch
       swSec = 0;                                    //reset the stopwatch seconds value
       swMin = 0;                                    //reset the stopwatch minutes value
+      swHrs = 0;                                    //reset the stopwatch hours value
       menu = B00001010;
     }
   }
