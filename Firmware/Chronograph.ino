@@ -16,7 +16,7 @@
 
 Version:        1.2.0
 Modified:       October 2, 2017
-Verified:
+Verified:       October 3, 2017
 Target uC:      ATtiny85
 
 -----------------------------------------***DESCRIPTION***
