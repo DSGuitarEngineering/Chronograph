@@ -3,11 +3,11 @@ This is the codebase for the Chronograph project, by DS Guitar Engineering.  The
 
 ## Getting Started
 
-Follow these instructions to build a Chronograph development board.  See the depolyment section if you wish to use the official Chronograph hardware for development.
+Follow these instructions to build a Chronograph development board.  See the deployment section if you wish to use the official Chronograph hardware for development.
 
 ### Prerequisites
 
-The following is a minimum BOM needed to make a Chronograph development board.  Links are provided for the DIP variant (if available) for simplified breadboard wiring.  The official hardware utilizies 100% surface mount packages.
+The following is a minimum BOM needed to make a Chronograph development board.  Links are provided for the DIP variant (if available) for simplified breadboard wiring.  The official hardware utilizes 100% surface mount packages.
 * Any [ATtiny85](http://www.mouser.com/ProductDetail/Microchip-Technology-Atmel/ATtiny85-20PU/?qs=sGAEpiMZZMtkfMPOFRTOl5CRAVRAdtfp) variant
 * Any variant of the [DS1307](http://www.mouser.com/ProductDetail/Maxim-Integrated/DS1307+/?qs=sGAEpiMZZMsWkX3fPoxIPao0OKuDwxf4) RTC
 * [AS1115](http://www.mouser.com/Search/ProductDetail.aspx?R=AS1115-BSSTvirtualkey58040000virtualkey985-AS1115-BSST) display driver
@@ -54,7 +54,7 @@ Please initiate contact through our [official website](https://ds.engineering/co
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/DSGuitarEngineering/Chronograph/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/DSGuitarEngineering/Chronograph/tags).
 
 ## Authors
 
