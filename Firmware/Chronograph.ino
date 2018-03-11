@@ -14,10 +14,10 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Version:        1.2.0
-Modified:       September 27, 2017
-Verified:       October 5, 2017
-Target uC:      ATtiny85
+Version:        2.0.0-alpha
+Modified:       February 4, 2018
+Verified:       February 4, 2018
+Target uC:      ATSAMD21G18
 
 -----------------------------------------***DESCRIPTION***
 The goal of this project is to build a pedalboard clock with countdown timer and stopwatch functionality.
@@ -27,50 +27,60 @@ clock.  External power will light the display and power the microprocessor.
 
 
 --------------------------------------------------------------------------------------------------------*/
-//include the necessary libraries
-#include <TinyWireM.h>
-#include <USI_TWI_Master.h>
-#include <EEPROM.h>
-#include <TinyRTClib.h>
 
-RTC_DS1307 rtc;                 // Set up real time clock
+//include the necessary libraries
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
+#include <FlashAsEEPROM.h>
+#include "RTClib.h"
+
+//hardware setup
+RTC_DS3231 rtc;                                    //declare the RTC, actual RTC is DS3232
+Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();  //declare the display
 
 //set pin numbers
-const byte FSW = 1;             //footswitch pin, active low
-const byte SQW = 4;             //RTC square wave input pin
+const byte FSW = 2;                 //footswitch pin, active low
+const byte SQW = 4;                 //RTC square wave input pin
+const byte CLN = 13;                //colon LEDs, active high
 
-//set variables
-boolean buttonDown = false;     //button's current debounced reading
-boolean buttonHeld = false;     //button hold detector
-unsigned long buttonTimer = 0;  //timer for debouncing button
-int debounce = 40UL;            //debounce time in milliseconds
+//declare variables
+char displaybuffer[4] = {' ', ' ', ' ', ' '};      //buffer for marquee messages
 
-//unsigned long prevTime = 0;
-byte SQWstate;
+boolean buttonDown = false;         //button's current debounced reading
+boolean buttonHeld = false;         //button hold detector
+unsigned long buttonTimer = 0;      //timer for debouncing button
+int debounce = 40UL;                //debounce time in milliseconds
 
-byte swHrs = 0;                 //stores the hours value of the stopwatch
-byte swMin = 0;                 //stores the minutes value of the stopwatch
-byte swSec = 0;                 //stores the seconds value of the stopwatch
-boolean runSW = false;          //trigger for incrementing the stopwatch in the main loop
+byte SQWstate;                      //stores the state of the SQW pin
 
-byte ctdnMin;                   //stores the minutes value of the countdown timer (EEPROM)
-byte ctdnSec;                   //stores the seconds value of the countdown timer (EEPROM)
-boolean runTimer = false;       //trigger for decrementing the timer in the main loop
+byte swHrs = 0;                     //stores the hours value of the stopwatch
+byte swMin = 0;                     //stores the minutes value of the stopwatch
+byte swSec = 0;                     //stores the seconds value of the stopwatch
+boolean runSW = false;              //trigger for incrementing the stopwatch in the main loop
 
-byte clkHour = 0;               //stores the hour of the current time
-byte clkMin = 0;                //stores the minute of the current time
+byte ctdnMin;                       //stores the minutes value of the countdown timer (EEPROM)
+byte ctdnSec;                       //stores the seconds value of the countdown timer (EEPROM)
+boolean runTimer = false;           //trigger for decrementing the timer in the main loop
 
-byte menu = 0;                  //menu register stores the current position in the menu tree
-boolean setupMode = false;      //specifies whether startup should go to setup mode or normal
-byte warning;                   //temporarily holds the value of the countdown timer warning
+byte clkHour = 0;                   //stores the hour of the current time
+byte clkMin = 0;                    //stores the minute of the current time
 
-boolean drawColon = false;      //lights the colon segments on the display when true
+byte menu = 0;                      //menu register stores the current position in the menu tree
+boolean setupMode = false;          //specifies whether startup should go to setup mode or normal
+byte warning;                       //temporarily holds the value of the countdown timer warning
+
+//boolean drawColon = false;          //lights the colon segments on the display when true
 
 
-//*****************************************SETUP**********************************************
+//***********************************************************************************************************************
+//---------------------------------------------------------SETUP---------------------------------------------------------
+//***********************************************************************************************************************
 
-void setup()
-{
+
+void setup() {
+  Serial.begin(9600);                                     //open the serial port (for debug only)
+
   //check EEPROM for errors and load default values if errors are found
   if(EEPROM.read(0) > 99) EEPROM.update(0, B00000001);    //initialize countdown timer minutes to 1
   if(EEPROM.read(1) > 59) EEPROM.update(1, B00000000);    //initialize countdown timer seconds to 0
@@ -79,51 +89,64 @@ void setup()
   if(EEPROM.read(3) > 1)  EEPROM.update(3, B00000000);    //initialize countdown timer warning to "on"
       //0 = on, 1 = off
   if(EEPROM.read(4) > 10) EEPROM.update(4, B00000001);    //initialize warning time to 1min
+  EEPROM.commit();
 
   //setup I/O pin modes
   pinMode (FSW, INPUT_PULLUP);                            //footswitch is NO between pin and ground
   pinMode (SQW, INPUT_PULLUP);                            //RTC SQW pin is open drain; requires pullup
 
-  //initialize the RTC
-  rtc.begin();
+  pinMode (CLN, OUTPUT);                                  //colon LEDs, active high
+  digitalWrite(CLN, LOW);                                 //initialize colon off
 
-  //initialize the display
-  TinyWireM.begin();                                      //setup the I2C bus
-  WriteDisp(0x0C, 0x01);                                  //wake up & reset feature register
-  WriteDisp(0x0A, 0x0F);                                  //set global intensity to 100%
-  WriteDisp(0x0B, 0x03);                                  //set scan limit to display first 4 digits
-  WriteDisp(0x09, 0x00);                                  //set all digits to "no decode"
+  alpha4.begin(0x70);                                     //display driver is at I2C address 70h
+
+  alpha4.clear();                                         //clear the display
+  alpha4.writeDisplay();                                  //update the display with new data
+
 
   //if the footswitch is held down, start in setup mode
-  if(digitalRead(FSW) == LOW)
-  {
-    writeLeftRaw(0x5B, 0x0F);     //S,t
-    writeRightRaw(0x1C, 0x67);    //u,P
-    delay(3000);
-    drawColon = true;
-    setupMode = true;
-    //load the first menu item
-    WriteDisp(0x09, 0x0C);                                // do not decode left, decode right
-    writeLeftRaw(0x1F, 0x0E);     //b,L
-    warning = EEPROM.read(4);
-    writeRight(warning);
-    delay(500);
-    blinkRight(warning);
-    //set the next menu item
-    menu = B01010000;
-  }
+    if(digitalRead(FSW) == LOW)
+    {
+      marquee("SETUP MODE");
+      //writeLeftRaw(0x5B, 0x0F);     //S,t
+      //writeRightRaw(0x1C, 0x67);    //u,P
+      delay(1000);
+      setupMode = true;
+      //load the first menu item
+      marquee("Warning Threshold");
+      //WriteDisp(0x09, 0x0C);                                // do not decode left, decode right
+      //writeLeftRaw(0x1F, 0x0E);     //b,L
+      alpha4.writeDigitAscii(0, 'B');
+      alpha4.writeDigitAscii(1, 'L');
+      drawColon(true);
+      warning = EEPROM.read(4);
+      writeRight(warning);
+      delay(500);
+      blinkRight(warning);
+      //set the next menu item
+      menu = B01010000;
+    }
+
 
   //if the setup mode was not initiated boot in normal mode
   if(setupMode == false)
   {
-    lightShow();                                          //display the startup lightshow
-    writeClk();                                           //write the current time to the display
-  }
+    //display startup message
+    char4("DSGE");
+    delay(1000);
+    marquee("ChronoTune");
+    //delay(500);
+    //marquee("by DS Engineering");
 
+    writeClk();
+  }
 }
 
 
-//*****************************************MAIN LOOP**********************************************
+//***********************************************************************************************************************
+//-------------------------------------------------------MAIN LOOP-------------------------------------------------------
+//***********************************************************************************************************************
+
 
 void loop()
 {
@@ -155,7 +178,7 @@ void loop()
     tapHandler();                            //go to the tap menu tree
   }
 
-//bailout from line 226
+//bailout from tapHandler
 bailout:
 
   //call hold functions if footswitches are held for 1 second or longer
@@ -177,10 +200,11 @@ bailout:
     if(ctdnSec == 255) {ctdnSec = 59; ctdnMin = --ctdnMin;}
     //refresh the display if the countdown timer is still running
     if((ctdnSec >= 0) && (ctdnMin >= 0)) {writeLeft(ctdnMin); writeRight(ctdnSec);}
-    if(ctdnMin < warning) ClearDisp(490);           //blink display if the threshold has been crossed
+    if((ctdnMin == warning) && (ctdnSec == 0)) alpha4.blinkRate(2);    //flash display if the threshold has been crossed
     //if the countdown timer has expired
     if((ctdnSec == 0) && (ctdnMin == 0))
     {
+      alpha4.blinkRate(0);                          //disable the warning flash
       runTimer = false;                             //diable the countdown timer
       menu = B00000001;
     }
@@ -200,7 +224,7 @@ bailout:
     }
     if(swHrs > 0)
     {
-      drawColon = !drawColon;                       //toggle the colon every second if an hour has passed
+      //drawColon = !drawColon;                       //toggle the colon every second if an hour has passed
       writeLeft(swHrs);                             //refresh the display
       writeRight(swMin);                            //"
     }
@@ -223,13 +247,13 @@ bailout:
         writeClk();                                 //update the clock
       }
     }
-
-}                                                   //end of the main loop
+}
 
 
 //***********************************************************************************************************************
 //-------------------------------------------------------SUBROUTINES-----------------------------------------------------
 //***********************************************************************************************************************
+
 
 //This routine handles footswitch taps
 void tapHandler()
@@ -241,8 +265,8 @@ void tapHandler()
         //select countdown timer
         ctdnMin = EEPROM.read(0);                               //load the countdown timer minute from memory
         ctdnSec = EEPROM.read(1);                               //load the countdown timer seconds from memory
-        drawColon = true;                                       //enable the colon
-        WriteDisp(0x09, 0x0F);                                  //decode all 4 digits
+        drawColon(true);                                        //enable the colon
+        //WriteDisp(0x09, 0x0F);                                  //decode all 4 digits
         writeLeft(ctdnMin);                                     //write the minutes to the left side
         writeRight(ctdnSec);                                    //write the seconds to the right side
         delay(500);
@@ -278,8 +302,8 @@ void tapHandler()
         //select stopwatch and initialize
         swMin = 0;                                              //set the stopwatch minutes to zero
         swSec = 0;                                              //set the stopwatch seconds to zero
-        drawColon = true;                                       //enable the colon
-        WriteDisp(0x09, 0x0F);                                  //decode all 4 digits
+        drawColon(true);                                        //enable the colon
+        //WriteDisp(0x09, 0x0F);                                  //decode all 4 digits
         writeLeft(swMin);                                       //write the minutes to the left side
         writeRight(swSec);                                      //write the seconds to the right side
         menu = B00001011;
@@ -354,20 +378,24 @@ void holdHandler()
     case B00000000:
       //current time
         //go to countdown timer root
-        drawColon = false;                        //disable the colon
-        WriteDisp(0x09, 0x00);                    //set all digits to "no decode"
+        drawColon(false);                           //disable the colon
+        marquee("Countdown Timer");
+        char4("CTDN");
+        /*WriteDisp(0x09, 0x00);                    //set all digits to "no decode"
         writeLeftRaw(0x4E, 0x0F);     //C,t
-        writeRightRaw(0x3D, 0x15);    //d,n
-        WriteRTC(0x0E, B00000000);                //enable the RTC's SQW output at a frequency of 1Hz****************************************************
+        writeRightRaw(0x3D, 0x15);    //d,n*/
+        writeRTC(0x0E, B00000000);                //enable the RTC's SQW output at a frequency of 1Hz****************************************************
         menu = B00000001;
       break;
     case B00000001:
       //countdown timer root
         //go to stopwatch root
-        drawColon = false;                        //disable the colon
-        WriteDisp(0x09, 0x00);                    //set all digits to "no decode"
+        drawColon(false);                         //disable the colon
+        marquee("Stopwatch");
+        char4("CTUP");
+        /*WriteDisp(0x09, 0x00);                    //set all digits to "no decode"
         writeLeftRaw(0x4E, 0x0F);     //C,t
-        writeRightRaw(0x1C, 0x67);    //u,P
+        writeRightRaw(0x1C, 0x67);    //u,P*/
         menu = B00001010;
       break;
     case B00000010:
@@ -386,8 +414,11 @@ void holdHandler()
     case B00000100:
       //increment timer seconds
         //accept timer seconds
-        ClearDisp(500);                           //clear the display and delay for 500 milliseconds
-        drawColon = true;                         //enable the colon
+        //ClearDisp(500);                           //clear the display and delay for 500 milliseconds
+        alpha4.clear();
+        alpha4.writeDisplay();
+        delay(500);
+        drawColon(true);                          //enable the colon
         writeLeft(ctdnMin);                       //write the countdown timer minutes to the left side
         writeRight(ctdnSec);                      //write the countdown timer seconds to the right side
         EEPROM.update(0, ctdnMin);                //write the countdown timer minutes to memory if different
@@ -430,20 +461,28 @@ void holdHandler()
     case B00001010:
       //Timer Stop/Reset
         //go to clock
-        ClearDisp(50);                            //clear the display and delay for 50 milliseconds
-        drawColon = true;                         //enable the colon
+        /*ClearDisp(50);                            //clear the display and delay for 50 milliseconds
+        drawColon = true;*/                         //enable the colon
+        alpha4.clear();
+        alpha4.writeDisplay();
+        delay(50);
         menu = B00000000;
+        marquee("Clock");
         writeClk();                               //write the current time to the display
-        WriteRTC(0x07, B00000100);                //disable the RTC's SQW output******************************************************************************
+        writeRTC(0x07, B00000100);                //disable the RTC's SQW output******************************************************************************
       break;
     case B00001011:
       //stopwatch Stop/Reset
         //go to clock
-        ClearDisp(50);                            //clear the display and delay for 50 milliseconds
-        drawColon = true;                         //enable the colon
+        /*ClearDisp(50);                            //clear the display and delay for 50 milliseconds
+        drawColon = true;*/                         //enable the colon
+        alpha4.clear();
+        alpha4.writeDisplay();
+        delay(50);
         menu = B00000000;
+        marquee("Clock");
         writeClk();                               //write the current time to the display
-        WriteRTC(0x07, B00000100);                //disable the RTC's SQW output******************************************************************************
+        writeRTC(0x07, B00000100);                //disable the RTC's SQW output******************************************************************************
       break;
     case B00001100:
       //stopwatch start
@@ -468,8 +507,10 @@ void holdHandler()
         //accept clock changes
         //RTC is always operating in 24-hour format.  uC converts to 12-hr format if necessary
         rtc.adjust(DateTime(2016, 8, 31, clkHour, clkMin, 0));  //write new time to RTC
-        WriteDisp(0x09, 0x0C);                                  //do not decode left, decode right
-        writeLeftRaw(0x1F, 0x0E);     //b,L
+        //WriteDisp(0x09, 0x0C);                                  //do not decode left, decode right
+        //writeLeftRaw(0x1F, 0x0E);     //b,L
+        alpha4.writeDigitAscii(0, 'B');
+        alpha4.writeDigitAscii(1, 'L');
         warning = EEPROM.read(4);
         writeRight(warning);
         delay(500);
@@ -492,7 +533,9 @@ void holdHandler()
         //accept the warning time
         EEPROM.update(4, warning);
         //load next menu item
-        writeLeftRaw(0x17, 0x05);     //h,r
+        //writeLeftRaw(0x17, 0x05);     //h,r
+        alpha4.writeDigitAscii(0, 'H');
+        alpha4.writeDigitAscii(1, 'R');
         if(EEPROM.read(2) == 0) writeRight(12);
         if(EEPROM.read(2) >= 1) writeRight(24);
         menu = B00110000;
@@ -512,79 +555,105 @@ void writeClk()
     if(clkHour == 0) clkHour = 12;
   }
   clkMin = now.minute();                        // Get the minutes
-  drawColon = true;
-  WriteDisp(0x09, 0x0F);                        // Set all digits to "BCD decode".
-  writeLeft(clkHour);
-  writeRight(clkMin);
+  drawColon(true);                              //turn on the colon
+  //WriteDisp(0x09, 0x0F);                        // Set all digits to "BCD decode".
+  writeLeft(clkHour);                           //push the hours value to the display
+  writeRight(clkMin);                           //push the minutes value to the display
 }
 
 
 //This routine writes numbers to the left side of the display--------------------------------------------------------
 void writeLeft(byte x)
 {
-  WriteDisp(1, x / 10);
+  char y = (x / 10) + '0';                      //calculate left digit and convert number to character
+  char z = (x % 10) + '0';                      //calculate right digit and convert number to character
+  alpha4.writeDigitAscii(0, y);                 //write the left number
+  alpha4.writeDigitAscii(1, z);                 //write the right number
 
   //if the clock is active and in 12 hour format
   if((clkHour < 10) && (menu == 0 || menu == B00010000 || menu == B00100000) && (EEPROM.read(2) == 0))
   {
-    WriteDisp(1, 0x0F);           // turn off the first digit if time is less than 10:00
+    alpha4.writeDigitAscii(0, ' ');             // turn off the first digit if time is less than 10:00
   }
 
-  if(drawColon == false) {WriteDisp(2, x % 10);}
+  /*if(drawColon == false) {alpha4.writeDigitAscii(2, x % 10);}
   if(drawColon == true)
   {
     x = (x % 10);
     x = (x |= B10000000);
-    WriteDisp(2, x);
-  }
+    alpha4.writeDigitAscii(2, x);
+  }*/
+  alpha4.writeDisplay();
 }
 
 
 //This routine writes numbers to the right side of the display------------------------------------------------------
-void writeRight(byte y)
+void writeRight(byte x)
 {
-  WriteDisp(4, y % 10);
-  if(drawColon == false) {WriteDisp(3, y / 10);}
+  char y = (x / 10) + '0';                      //calculate left digit and convert number to character
+  char z = (x % 10) + '0';                      //calculate right digit and convert number to character
+  alpha4.writeDigitAscii(2, y);                 //write the left number
+  alpha4.writeDigitAscii(3, z);                 //write the right number
+  /*alpha4.writeDigitAscii(3, y % 10);
+  if(drawColon == false) {alpha4.writeDigitAscii(3, y / 10);}
   if(drawColon == true)
   {
     y = (y / 10);
     y = (y |= B10000000);
-    WriteDisp(3, y);
-  }
+    alpha4.writeDigitAscii(2, y);
+  }*/
+  alpha4.writeDisplay();
 }
 
 
-//This routine writes raw data to the left side of the display------------------------------------------------------
-void writeLeftRaw(byte x, byte y)
+//This routine displays marquee style messages--------------------------------------------------------------
+//  must pass a string; returns nothing
+void marquee(String s)
 {
-  WriteDisp(1, x);            // write digit 1
-  if(drawColon == false) {WriteDisp(2, y);}
-  if(drawColon == true)
-  {
-    y = y |= B10000000;
-    WriteDisp(2, y);
+  s.concat("    ");     //concatenate 4 blank spaces to  the beginning of the message to make the entire
+                        //message scroll across the display
+
+  for (int i=0; i < s.length(); i++){   //run loop i times, where i is the number of characters in the string
+
+    // scroll down display
+    displaybuffer[0] = displaybuffer[1];
+    displaybuffer[1] = displaybuffer[2];
+    displaybuffer[2] = displaybuffer[3];
+    displaybuffer[3] = s.charAt(i);
+
+    // set every digit to the buffer
+    alpha4.writeDigitAscii(0, displaybuffer[0]);
+    alpha4.writeDigitAscii(1, displaybuffer[1]);
+    alpha4.writeDigitAscii(2, displaybuffer[2]);
+    alpha4.writeDigitAscii(3, displaybuffer[3]);
+
+    // write it out
+    alpha4.writeDisplay();
+    delay(150);           //delay between each character transition
   }
+  alpha4.clear();
+  alpha4.writeDisplay();
 }
 
 
-//This routine writes raw data to the right side of the display--------------------------------------------------------
-void writeRightRaw(byte x, byte y)
+//This routine displays static 4-character messages-------------------------------------------------------------------
+//  must pass a string; returns nothing
+void char4(String s)
 {
-  if(drawColon == false) {WriteDisp(3, x);}
-  if(drawColon == true)
-  {
-    x = x |= B10000000;
-    WriteDisp(3, x);
-  }
-  WriteDisp(4, y);            // write digit 4
+  alpha4.writeDigitAscii(0, s.charAt(0));
+  alpha4.writeDigitAscii(1, s.charAt(1));
+  alpha4.writeDigitAscii(2, s.charAt(2));
+  alpha4.writeDigitAscii(3, s.charAt(3));
+  alpha4.writeDisplay();
 }
 
 
 //This routine blinks the left side of the display--------------------------------------------------------------------
 void blinkLeft(byte x)
 {
-  WriteDisp(1,0x0F);
-  WriteDisp(2,0x0F);
+  alpha4.writeDigitAscii(0, ' ');
+  alpha4.writeDigitAscii(1, ' ');
+  alpha4.writeDisplay();
   delay(500);
   writeLeft(x);
 }
@@ -593,65 +662,26 @@ void blinkLeft(byte x)
 //This routine blinks the right side of the display--------------------------------------------------------------------
 void blinkRight(byte x)
 {
-  WriteDisp(3,0x0F);
-  WriteDisp(4,0x0F);
+  alpha4.writeDigitAscii(2, ' ');
+  alpha4.writeDigitAscii(3, ' ');
+  alpha4.writeDisplay();
   delay(500);
   writeRight(x);
 }
 
 
-//This routine displays "dSgE ChronogrAPh" during startup--------------------------------------------------------------
-void lightShow()
+//This routine turns the colon LEDs on or off---------------------------------------------------------------------------
+void drawColon(boolean x)
 {
-  writeLeftRaw(0x3D, 0x5B);     //d,S
-  writeRightRaw(0x7B, 0x4F);    //g,E
-  delay(1000);
-  ClearDisp(500);
-  writeLeftRaw(0x4E, 0x17);     //C,h
-  writeRightRaw(0x05, 0x1D);    //r,o
-  delay(750);
-  writeLeftRaw(0x17, 0x05);     //h,r
-  writeRightRaw(0x1D, 0x15);    //o,n
-  delay(250);
-  writeLeftRaw(0x05, 0x1D);     //r,o
-  writeRightRaw(0x15, 0x1D);    //n,o
-  delay(250);
-  writeLeftRaw(0x1D, 0x15);     //o,n
-  writeRightRaw(0x1D, 0x7B);    //o,g
-  delay(250);
-  writeLeftRaw(0x15, 0x1D);     //n,o
-  writeRightRaw(0x7B, 0x05);    //g,r
-  delay(250);
-  writeLeftRaw(0x1D, 0x7B);     //o,g
-  writeRightRaw(0x05, 0x77);    //r,A
-  delay(250);
-  writeLeftRaw(0x7B, 0x05);     //g,r
-  writeRightRaw(0x77, 0x67);    //A,P
-  delay(250);
-  writeLeftRaw(0x05, 0x77);     //r,A
-  writeRightRaw(0x67, 0x17);    //P,h
-  delay(750);
+  if (x == true) digitalWrite(CLN, HIGH);
+  if (x == false) digitalWrite(CLN, LOW);
 }
 
-//This routine addresses and sends data to the display driver (write operation)-----------------------------------------
-void WriteDisp(byte cmd, byte data) {
-  TinyWireM.beginTransmission(0x00);
-  TinyWireM.write(cmd);
-  TinyWireM.write(data);
-  TinyWireM.endTransmission();
-}
 
 //This routine addresses and sends data to the RTC chip (write operation)-----------------------------------------------
-void WriteRTC(byte cmd, byte data) {
-  TinyWireM.beginTransmission(0x68);      //7-bit address for DS1307/3231
-  TinyWireM.write(cmd);
-  TinyWireM.write(data);
-  TinyWireM.endTransmission();
-}
-
-//This routine turns off the display for the amount of time defined by "offTime" in milliseconds------------------------
-void ClearDisp(int offTime) {
-  WriteDisp(0x0C, 0x80);        //shutdown display and keep data
-  delay(offTime);
-  WriteDisp(0x0C, 0x81);        //resume display and restore data
+void writeRTC(byte cmd, byte data) {
+  Wire.beginTransmission(0x68);      //7-bit address for DS3231
+  Wire.write(cmd);
+  Wire.write(data);
+  Wire.endTransmission();
 }
